@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "39085d52-6f01-4439-b2c1-53d9f39e636b"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.ak4sh.lifelogai",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
