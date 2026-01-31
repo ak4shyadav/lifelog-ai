@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme/colors';
@@ -40,7 +40,7 @@ const Sleep: React.FC = () => {
                 <View style={{ width: 60 }} />
             </View>
 
-            <View style={styles.content}>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.timerCircle}>
                     {state.sleep.activeSession ? (
                         <>
@@ -69,7 +69,31 @@ const Sleep: React.FC = () => {
                         </Text>
                     </View>
                 )}
-            </View>
+
+                <View style={styles.historyContainer}>
+                    <Text style={styles.historyTitle}>Rest History</Text>
+                    {Object.entries(state.sleep.sessions.reduce((acc, session) => {
+                        const date = session.date || new Date(session.startTime).toISOString().split('T')[0];
+                        if (!acc[date]) acc[date] = [];
+                        acc[date].push(session);
+                        return acc;
+                    }, {} as Record<string, typeof state.sleep.sessions>)).sort((a, b) => b[0].localeCompare(a[0])).map(([date, sessions]) => (
+                        <View key={date} style={styles.dateGroup}>
+                            <Text style={styles.dateHeader}>{new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
+                            {sessions.map((session, idx) => (
+                                <View key={idx} style={styles.historyItem}>
+                                    <Text style={styles.historyTime}>
+                                        {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </Text>
+                                    <Text style={styles.historyDuration}>
+                                        {Math.floor(session.duration / 3600000)}h {Math.floor((session.duration % 3600000) / 60000)}m
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    ))}
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -97,9 +121,9 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     content: {
-        flex: 1,
         alignItems: 'center',
-        paddingTop: 60,
+        paddingTop: 40,
+        paddingBottom: 40,
     },
     timerCircle: {
         width: 240,
@@ -110,7 +134,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(26, 26, 46, 0.5)',
-        marginBottom: 60,
+        marginBottom: 50,
     },
     timerText: {
         color: colors.text,
@@ -151,7 +175,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     lastSessionCard: {
-        marginTop: 60,
+        marginTop: 40,
         backgroundColor: colors.card,
         width: '80%',
         padding: 24,
@@ -172,6 +196,44 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
     },
+    historyContainer: {
+        width: '100%',
+        paddingHorizontal: 20,
+        marginTop: 40,
+    },
+    historyTitle: {
+        color: colors.text,
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 20,
+    },
+    dateGroup: {
+        marginBottom: 20,
+    },
+    dateHeader: {
+        color: colors.textSubtle,
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 10,
+    },
+    historyItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 8,
+    },
+    historyTime: {
+        color: colors.text,
+        fontSize: 15,
+    },
+    historyDuration: {
+        color: colors.blue.primary,
+        fontWeight: '600',
+    }
 });
 
 export default Sleep;

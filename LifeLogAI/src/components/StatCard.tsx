@@ -1,6 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { colors, AccentColor } from '../theme/colors';
+import React, { useEffect, useRef } from 'react';
+import { TouchableOpacity, Text, StyleSheet, View, Animated } from 'react-native';
+import { colors as defaultColors, AccentColor } from '../theme/colors';
+import { useApp } from '../context/AppContext';
 import ProgressRing from './ProgressRing';
 
 interface StatCardProps {
@@ -12,30 +13,55 @@ interface StatCardProps {
     active?: boolean;
 }
 
-const accentStyles = {
-    blue: {
-        labelColor: colors.blue.primary,
-        bgColor: 'rgba(59, 130, 246, 0.12)',
-        borderColor: colors.blue.border,
-    },
-    green: {
-        labelColor: colors.green.primary,
-        bgColor: 'rgba(16, 185, 129, 0.12)',
-        borderColor: colors.green.border,
-    },
-    orange: {
-        labelColor: colors.orange.primary,
-        bgColor: 'rgba(249, 115, 22, 0.12)',
-        borderColor: colors.orange.border,
-    },
-    purple: {
-        labelColor: colors.purple.primary,
-        bgColor: 'rgba(139, 92, 246, 0.12)',
-        borderColor: colors.purple.border,
-    },
-};
-
 const StatCard: React.FC<StatCardProps> = ({ label, value, accentColor, onPress, progress, active }) => {
+    const { themeColors } = useApp();
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        if (active) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, {
+                        toValue: 0.6,
+                        duration: 1000,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pulseAnim, {
+                        toValue: 1,
+                        duration: 1000,
+                        useNativeDriver: true,
+                    }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+        }
+    }, [active]);
+
+    // Only use base dark colors for accents for now
+    const accentStyles = {
+        blue: {
+            labelColor: defaultColors.blue.primary,
+            bgColor: 'rgba(59, 130, 246, 0.12)',
+            borderColor: defaultColors.blue.border,
+        },
+        green: {
+            labelColor: defaultColors.green.primary,
+            bgColor: 'rgba(16, 185, 129, 0.12)',
+            borderColor: defaultColors.green.border,
+        },
+        orange: {
+            labelColor: defaultColors.orange.primary,
+            bgColor: 'rgba(249, 115, 22, 0.12)',
+            borderColor: defaultColors.orange.border,
+        },
+        purple: {
+            labelColor: defaultColors.purple.primary,
+            bgColor: 'rgba(139, 92, 246, 0.12)',
+            borderColor: defaultColors.purple.border,
+        },
+    };
+
     const accent = accentStyles[accentColor];
 
     return (
@@ -45,27 +71,35 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, accentColor, onPress,
             style={[
                 styles.card,
                 {
-                    backgroundColor: accent.bgColor,
-                    borderColor: active ? colors.text : accent.borderColor,
-                    borderWidth: active ? 2 : 1.5,
+                    backgroundColor: themeColors.card,
+                    borderColor: active ? themeColors.text : themeColors.cardBorder,
+                    borderWidth: active ? 2 : 1,
+                    ...(active ? { backgroundColor: accent.bgColor, borderColor: accent.borderColor } : {})
                 },
             ]}
         >
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <View style={styles.labelRow}>
-                        <Text style={[styles.label, { color: accent.labelColor }]}>{label}</Text>
+                        <Text style={[styles.label, { color: active ? accent.labelColor : themeColors.textSubtle }]}>{label}</Text>
                         {active && (
                             <View style={[styles.activeIndicator, { backgroundColor: accent.labelColor }]} />
                         )}
                     </View>
-                    <Text style={styles.value}>{value}</Text>
+
+                    {active ? (
+                        <Animated.Text style={[styles.value, { color: themeColors.text, opacity: pulseAnim }]}>
+                            {value}
+                        </Animated.Text>
+                    ) : (
+                        <Text style={[styles.value, { color: themeColors.text }]}>{value}</Text>
+                    )}
                 </View>
 
-                {progress !== undefined && (
+                {progress !== undefined && !active && (
                     <ProgressRing
                         progress={progress}
-                        color={accent.labelColor}
+                        color={active ? accent.labelColor : themeColors.textMuted}
                         size={48}
                         strokeWidth={5}
                     />
@@ -80,6 +114,11 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 20,
         marginBottom: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
     content: {
         flexDirection: 'row',
@@ -107,9 +146,8 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     value: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: '700',
-        color: colors.text,
         letterSpacing: -0.5,
     },
 });

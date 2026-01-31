@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme/colors';
 
 const Journal: React.FC = () => {
     const navigation = useNavigation();
-    const { state, addJournalEntry } = useApp();
+    const { state, addJournalEntry, deleteJournalEntry } = useApp();
     const [text, setText] = useState('');
 
     const handleSave = () => {
@@ -51,8 +51,13 @@ const Journal: React.FC = () => {
                             <View key={entry.id} style={styles.entryCard}>
                                 <View style={styles.entryHeader}>
                                     <Text style={styles.entryDate}>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
-                                    <View style={styles.emotionTag}>
-                                        <Text style={styles.emotionText}>{entry.emotion}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                        <View style={styles.emotionTag}>
+                                            <Text style={styles.emotionText}>{entry.emotion}</Text>
+                                        </View>
+                                        <TouchableOpacity onPress={() => Alert.alert("Delete Entry", "Delete this reflection?", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => deleteJournalEntry(entry.id) }])}>
+                                            <Text style={styles.deleteIcon}>×</Text>
+                                        </TouchableOpacity>
                                     </View>
                                 </View>
                                 <Text style={styles.entryText}>"{entry.text}"</Text>
@@ -167,6 +172,12 @@ const styles = StyleSheet.create({
         lineHeight: 24,
         fontStyle: 'italic',
     },
+    deleteIcon: {
+        color: colors.textSubtle,
+        fontSize: 20,
+        fontWeight: 'bold',
+        padding: 5
+    }
 });
 
 export default Journal;
